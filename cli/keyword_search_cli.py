@@ -1,8 +1,7 @@
 import argparse
-from lib.search_utils import *
-from settings import *
+from lib.search_utils import normalize_and_tokenize_query, load_json, match_movies_by_title, print_movie_list
 from lib.InvertedIndex import InvertedIndex
-
+from settings import PATH_MOVIES_FILE
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Keyword Search CLI")
@@ -11,7 +10,7 @@ def main() -> None:
     search_parser = subparsers.add_parser("search", help="Search movies using BM25")
     search_parser.add_argument("query", type=str, help="Search query")
 
-    build_paser = subparsers.add_parser("build", help="Build Inverted Index")
+    build_parser = subparsers.add_parser("build", help="Build Inverted Index")
 
     args = parser.parse_args()
 
@@ -19,22 +18,22 @@ def main() -> None:
         case "search":
             print(f"Searching for: {args.query}")
             
-            query = process_and_tokenize_text(args.query)
-            
+            i_index = InvertedIndex()
+            i_index.load()
+
+            query = normalize_and_tokenize_query(args.query)
             
             movies = load_json(PATH_MOVIES_FILE)["movies"]
             
-            result = match_movie(movies, query)
+            result = match_movies_by_title(movies, query)
             
-            print_movies(result)
+            print_movie_list(result)
             
             return result
         case "build":
                 i_index = InvertedIndex()
                 i_index.build()
                 i_index.save()
-                index = i_index.get_index()
-                print(sorted(index["merida"])[0])
         case _:
             parser.print_help()
 
