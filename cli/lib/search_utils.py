@@ -51,7 +51,7 @@ def strip_punctuation(s: str) -> str:
 	return s.translate(table)
 
 
-def match_movies_by_title(movies: list, tokens: list) -> list:
+def match_movies_by_title(i_index, tokens: list, nr_of_expected_results: int = 5) -> list:
 	"""Find movies whose title contains any token from the tokens list.
 
 	Parameters:
@@ -61,14 +61,15 @@ def match_movies_by_title(movies: list, tokens: list) -> list:
 	Returns:
 	- List of movie dicts that matched at least one token.
 	"""
-	results = []
-	for movie in movies:
-		title = strip_punctuation(movie["title"]).lower()
-		for token in tokens:
-			if token in title:
-				results.append(movie)
-	
-	return results
+	seen, results = set(), []
+	index = i_index.get_index()
+	for token in tokens:
+		if token in index:
+			results.extend(index[token])
+		if len(results) > nr_of_expected_results:
+			return i_index.get_docs_by_ids(set(results))
+
+	return i_index.get_docs_by_ids(set(results))
 
 
 def print_movie_list(movies: list, nr_of_movies: int = 6) -> None:
