@@ -72,17 +72,25 @@ def match_movies_by_title(i_index, tokens: list, nr_of_expected_results: int = 5
 	return i_index.get_docs_by_ids(set(results))
 
 
-def print_movie_list(movies: list, nr_of_movies: int = 6) -> None:
+def print_movie_list(movies: list, nr_of_movies: int = 5) -> None:
 	"""Print a numbered subset of movies to stdout.
 
 	Parameters:
 	- movies: List of movie dicts (each expected to have a 'title' key).
-	- nr_of_movies: Maximum number of movies to print (default 6).
+	- nr_of_movies: Maximum number of movies to print (default 5).
 	"""
 	if len(movies) < nr_of_movies:
 		nr_of_movies = len(movies)
 	for i in range(nr_of_movies):
 		print(f"{i + 1}. Movie Title {movies[i]['title']}") 
+
+def print_movie_list_with_scores(movies: list, nr_of_movies: int = 5) -> None:
+	if len(movies) < nr_of_movies:
+		nr_of_movies = len(movies)
+
+	for i, movie in enumerate(movies):
+		if i < nr_of_movies:
+			print(f"{i + 1}. ({movie[0]["id"]}) {movie[0]['title']}: {movie[1]:.2f}") 
 
 def tokenize_text(text: str) -> list[str]:
 	"""Lowercase, remove punctuation, and split a text string into tokens.
