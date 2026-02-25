@@ -47,6 +47,8 @@ def strip_punctuation(s: str) -> str:
 	Returns:
 	- The string with punctuation removed.
 	"""
+	if s == None or s == "":
+		raise ValueError()
 	table = str.maketrans('', '', string.punctuation)
 	return s.translate(table)
 

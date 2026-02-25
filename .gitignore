@@ -11,4 +11,4 @@ wheels/
 .vscode
 # /data/
 # cache/
-test/
+tests/

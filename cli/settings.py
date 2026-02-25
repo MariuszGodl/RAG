@@ -7,5 +7,7 @@ PATH_CACHE_INDEX = PATH_CACHE + "index.pkl"
 PATH_CACHE_TERM_FREQUENCIES = PATH_CACHE + "term_frequencies.pkl"
 PATH_CACHE_DOC_LENGTH = PATH_CACHE + "doc_lengths.pkl"
 
+PATH_CACHE_EMBEDDINGS = PATH_CACHE + "movie_embeddings.npy"
+
 BM25_K1 = 1.5
 BM25_B = 0.75
