@@ -1,14 +1,16 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
 import os 
+import re
 from pathlib import Path
 from settings import PATH_CACHE, PATH_CACHE_EMBEDDINGS
 from lib.search_utils import strip_punctuation
 from lib.utils import cosine_similarity
+from lib.keyword_search import InvertedIndex
 
 class SemanticSearch():
-    def __init__(self):
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+    def __init__(self, model:str = "all-MiniLM-L6-v2"):
+        self.model = SentenceTransformer(model)
         self.embeddings = None
         self.documents = None
         self.documents_map = {}
@@ -37,7 +39,49 @@ class SemanticSearch():
            }
           for data in cosine_sim_res_sorted ]
         
+    def chunk(self, text: str, chunk_size: int = 200, overlap: int = 5) -> list[str]:
+        tokens = text.split()
+        chunks = [""]
+        flag, wc = 0, 0
         
+        for idx, token in enumerate(tokens, start=1):
+            if chunks[flag] == "":
+                chunks[flag] = token
+            else:
+                chunks[flag] += " " + token
+            wc += 1
+            if (wc % chunk_size) == 0:
+                chunks.append("")
+                flag += 1
+                chunks[flag] = " ".join(tokens[idx - overlap: idx]) if idx - overlap >= 0 else ""
+
+        if chunks[-1] == "":
+            chunks = chunks[:-1]
+        return chunks
+
+    def semantic_chunk(self, text: str, max_chunk_size: int = 4, overlap: int = 1):
+        text = text.strip()
+        if text == None or text == "": return []
+
+        sentences = re.split(r"(?<=[.!?])\s+", text)
+
+        sentences = [ sentance.strip() for sentance in sentences if sentance.strip() ]
+        if not sentences:
+            return []
+
+        chunks = []
+        step = max_chunk_size - overlap
+        step = max(1, step)
+
+        for i in range(0, len(sentences), step):
+            if sentences == None or sentences == "": return []
+            chunk_slice = sentences[i : i + max_chunk_size]
+            chunks.append(" ".join(chunk_slice))
+            
+            if i + max_chunk_size >= len(sentences):
+                break
+                
+        return chunks
 
     def build_embeddings(self, documents: list):
         self.documents = documents

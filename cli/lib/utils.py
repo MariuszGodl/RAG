@@ -26,3 +26,17 @@ def cosine_similarity(vec1, vec2):
         return 0.0
 
     return dot_product / (norm1 * norm2)
+
+def normalize(values: list[float]):
+    if len(values) == 0: return []
+    low = min(values)
+    high = max(values)
+    if low == high: return [ 1 ] * len(values)
+    return [ (value - low) / (high - low) for value in values ]
+
+def normalize_value(value: float, low: float, high: float):
+    if low == high: return 1 
+    return (value - low) / (high - low)
+
+def rrf_score(rank, k=60):
+    return 1 / (k + rank)

@@ -8,6 +8,8 @@ PATH_CACHE_TERM_FREQUENCIES = PATH_CACHE + "term_frequencies.pkl"
 PATH_CACHE_DOC_LENGTH = PATH_CACHE + "doc_lengths.pkl"
 
 PATH_CACHE_EMBEDDINGS = PATH_CACHE + "movie_embeddings.npy"
+PATH_CACHE_CHUNK_EMBEDDINGS = PATH_CACHE + "chunk_embeddings.npy"
+PATH_CACHE_CHUNK_METADATA = PATH_CACHE + "chunk_metadata.json"
 
 BM25_K1 = 1.5
 BM25_B = 0.75

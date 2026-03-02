@@ -1,6 +1,6 @@
 import argparse
 from lib.search_utils import print_movie_list_with_scores, normalize_and_tokenize_query, load_json, match_movies_by_title, print_movie_list
-from lib.InvertedIndex import InvertedIndex
+from lib.keyword_search import InvertedIndex
 from settings import PATH_MOVIES_FILE, BM25_K1, BM25_B
 import math
 
