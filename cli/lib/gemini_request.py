@@ -4,14 +4,21 @@ from google import genai
 import json
 from sentence_transformers import CrossEncoder
 import numpy as np
+from google.genai import types
 
 def get_gemini_response(query: str):
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
     response = client.models.generate_content(
         model="gemini-2.5-flash", 
-        contents=query
-    )
+        contents=query,
+        config=types.GenerateContentConfig(
+            safety_settings=[
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=types.HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                                    ),
+            ]))
     return response.text
 
 def evaluate_results(movies: list, query:str):
