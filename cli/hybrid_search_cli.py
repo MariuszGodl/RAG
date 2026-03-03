@@ -4,8 +4,8 @@ from lib.hybrid_search import HybridSearch
 from settings import PATH_MOVIES_FILE
 from lib.search_utils import load_json
 from dotenv import load_dotenv
-from lib.gemini_request import get_gemini_response
-from lib.utils import enhance_query
+from lib.gemini_request import get_gemini_response, enhance_query, rerank_docs
+
 
 def create_parsers() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Hybrid Search CLI")
@@ -32,7 +32,7 @@ def create_parsers() -> argparse.ArgumentParser:
     rrf_search_parser.add_argument(
         "--rerank-method", 
         type=str,
-        choices=["individual"])
+        choices=["individual", "batch", "cross_encoder"])
 
     return parser
 
@@ -62,10 +62,17 @@ def rrf_search(query: str, k: int = 60, limit:int = 5, enhance: str = None, rera
     
     documents = load_json(load_file)['movies']
     hybrid_search = HybridSearch(documents)
-    movies = hybrid_search.rrf_search(query, k, limit)
+    
+    if rerank_method in ["individual", "batch", "cross_encoder"]:
+        movies = hybrid_search.rrf_search(query, k, limit * 5)
+        movies = rerank_docs(movies, rerank_method, query, limit)
+    else:
+        movies = hybrid_search.rrf_search(query, k, limit)
 
     for i, movie in enumerate(movies, start=1):
         print(f"{i}. {movie["title"]}")
+        print(f"Rerank  Score: {movie.get("Rerank", None)}") if rerank_method in ["individual", "batch"] else None
+        print(f"Cross Encoder Score: {movie.get("CrossEncoder", None)}") if rerank_method == "cross_encoder" else None
         print(f"RRF Score: {movie["score"]:.2f}")
         print(f"BM25 Rank: {movie["bm25"]} , Semantic Rank: {movie["semantic"]}")
         print(f"{movie["description"][:50]}")
@@ -84,7 +91,8 @@ def main() -> None:
             rrf_search(args.query, args.k, args.limit, args.enhance, args.rerank_method)
         case _:
             parser.print_help()
-
+    
+    return 0
 
 if __name__ == "__main__":
     main()
