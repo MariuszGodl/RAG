@@ -4,7 +4,7 @@ from .keyword_search import InvertedIndex
 from .chunked_semantic_search import ChunkedSemanticSearch
 from settings import PATH_CACHE_INDEX
 from lib.utils import normalize_value, rrf_score
-
+import logging
 
 class HybridSearch():
     def __init__(self, documents):

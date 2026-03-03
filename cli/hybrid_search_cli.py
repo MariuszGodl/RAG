@@ -4,8 +4,11 @@ from lib.hybrid_search import HybridSearch
 from settings import PATH_MOVIES_FILE
 from lib.search_utils import load_json
 from dotenv import load_dotenv
-from lib.gemini_request import get_gemini_response, enhance_query, rerank_docs
+from lib.gemini_request import get_gemini_response, enhance_query, rerank_docs, evaluate_results
+import logging
 
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
 
 def create_parsers() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Hybrid Search CLI")
@@ -33,7 +36,11 @@ def create_parsers() -> argparse.ArgumentParser:
         "--rerank-method", 
         type=str,
         choices=["individual", "batch", "cross_encoder"])
-
+    rrf_search_parser.add_argument(
+        "--evaluate", 
+        action="store_true", 
+        help="Enable evaluation mode if present"
+    )
     return parser
 
 def normalize_command(values: list[int]):
@@ -53,21 +60,30 @@ def weighted_search_command(query: str, alpha: float = 0.5, limit: int = 5, load
         print(f"{movie["description"]}")
 
 
-def rrf_search(query: str, k: int = 60, limit:int = 5, enhance: str = None, rerank_method: str = None, load_file: str = PATH_MOVIES_FILE):
-
+def rrf_search(query: str, k: int = 60, limit:int = 5, enhance: str = None, rerank_method: str = None, evaluate: bool = False, load_file: str = PATH_MOVIES_FILE):
+    logger.info(f"Original Query: {query}")
+    init_query = query
     if enhance != None:
         en_query = get_gemini_response(enhance_query(query, enhance))
         print(f"Enhanced query ({enhance}): '{query}' -> '{en_query}'\n")
         query = en_query
-    
+        logger.info(f"Enhanced Query: {query}")
+
     documents = load_json(load_file)['movies']
     hybrid_search = HybridSearch(documents)
     
     if rerank_method in ["individual", "batch", "cross_encoder"]:
         movies = hybrid_search.rrf_search(query, k, limit * 5)
+        logger.info(f"RFF movies: {[movie['title'] for movie in movies]}")
         movies = rerank_docs(movies, rerank_method, query, limit)
+        logger.info(f"Rerank movies: {[movie['title'] for movie in movies]}")
     else:
         movies = hybrid_search.rrf_search(query, k, limit)
+        logger.info(f"RFF movies: {[movie['title'] for movie in movies]}")
+
+    if evaluate:
+        evaluate_results(movies, init_query)
+        return
 
     for i, movie in enumerate(movies, start=1):
         print(f"{i}. {movie["title"]}")
@@ -78,6 +94,7 @@ def rrf_search(query: str, k: int = 60, limit:int = 5, enhance: str = None, rera
         print(f"{movie["description"][:50]}")
 
 def main() -> None:
+
     load_dotenv()
     parser = create_parsers()
     args = parser.parse_args()
@@ -88,7 +105,7 @@ def main() -> None:
         case "weighted-search":
             weighted_search_command(args.query, args.alpha, args.limit)
         case "rrf-search":
-            rrf_search(args.query, args.k, args.limit, args.enhance, args.rerank_method)
+            rrf_search(args.query, args.k, args.limit, args.enhance, args.rerank_method, args.evaluate )
         case _:
             parser.print_help()
     

@@ -14,6 +14,30 @@ def get_gemini_response(query: str):
     )
     return response.text
 
+def evaluate_results(movies: list, query:str):
+    formatted_movies = [ f"Index: {i}, Title: {movie["title"]}, Description: {movie["description"]}" for i,  movie in enumerate(movies, start=1)]
+    agent_query = f"""Rate how relevant each result is to this query on a 0-3 scale:
+
+        Query: "{query}"
+
+        Results:
+        {chr(10).join(formatted_movies)}
+
+        Scale:
+        - 3: Highly relevant
+        - 2: Relevant
+        - 1: Marginally relevant
+        - 0: Not relevant
+
+        Do NOT give any numbers out than 0, 1, 2, or 3.
+
+        Return ONLY the scores in the same order you were given the documents. Return a valid JSON list, nothing else. For example:
+
+        [2, 0, 3, 2, 0, 1]"""
+    response = get_gemini_response(agent_query)
+    scores = json.loads(response) 
+    for i, (movie, score) in enumerate(zip(movies, scores), start=1):
+        print(f"{i}. {movie["title"]} {score}/3")
 
 def rerank_docs(docs: list[dict], rerank_type:str, query:str, limit: int = 5):
     

@@ -13,3 +13,5 @@ PATH_CACHE_CHUNK_METADATA = PATH_CACHE + "chunk_metadata.json"
 
 BM25_K1 = 1.5
 BM25_B = 0.75
+
+PATH_GOLDEN_JSON = "data/golden_dataset.json"
