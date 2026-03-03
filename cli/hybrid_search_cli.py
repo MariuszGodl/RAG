@@ -3,6 +3,9 @@ from lib.utils import normalize
 from lib.hybrid_search import HybridSearch
 from settings import PATH_MOVIES_FILE
 from lib.search_utils import load_json
+from dotenv import load_dotenv
+from lib.gemini_request import get_gemini_response
+from lib.utils import enhance_query
 
 def create_parsers() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Hybrid Search CLI")
@@ -20,6 +23,16 @@ def create_parsers() -> argparse.ArgumentParser:
     rrf_search_parser.add_argument("query", type=str)
     rrf_search_parser.add_argument("-k", type=int, default=60)
     rrf_search_parser.add_argument("--limit", type=int, default=5)
+    rrf_search_parser.add_argument(
+        "--enhance",
+        type=str,
+        choices=["spell", "rewrite", "expand"],
+        help="Query enhancement method",
+    )
+    rrf_search_parser.add_argument(
+        "--rerank-method", 
+        type=str,
+        choices=["individual"])
 
     return parser
 
@@ -39,7 +52,14 @@ def weighted_search_command(query: str, alpha: float = 0.5, limit: int = 5, load
         print(f"BM25: {movie["bm25"]} , Semantic: {movie["semantic"]}")
         print(f"{movie["description"]}")
 
-def rrf_search(query: str, k: int = 60, limit:int = 5, load_file: str = PATH_MOVIES_FILE):
+
+def rrf_search(query: str, k: int = 60, limit:int = 5, enhance: str = None, rerank_method: str = None, load_file: str = PATH_MOVIES_FILE):
+
+    if enhance != None:
+        en_query = get_gemini_response(enhance_query(query, enhance))
+        print(f"Enhanced query ({enhance}): '{query}' -> '{en_query}'\n")
+        query = en_query
+    
     documents = load_json(load_file)['movies']
     hybrid_search = HybridSearch(documents)
     movies = hybrid_search.rrf_search(query, k, limit)
@@ -51,7 +71,7 @@ def rrf_search(query: str, k: int = 60, limit:int = 5, load_file: str = PATH_MOV
         print(f"{movie["description"][:50]}")
 
 def main() -> None:
-
+    load_dotenv()
     parser = create_parsers()
     args = parser.parse_args()
 
@@ -61,7 +81,7 @@ def main() -> None:
         case "weighted-search":
             weighted_search_command(args.query, args.alpha, args.limit)
         case "rrf-search":
-            rrf_search(args.query, args.k, args.limit)
+            rrf_search(args.query, args.k, args.limit, args.enhance, args.rerank_method)
         case _:
             parser.print_help()
 
