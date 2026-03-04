@@ -6,7 +6,9 @@ from sentence_transformers import CrossEncoder
 import numpy as np
 from google.genai import types
 
-def get_gemini_response(query: str):
+
+
+def get_gemini_response(query, return_only_text: bool = True):
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
     response = client.models.generate_content(
@@ -19,7 +21,9 @@ def get_gemini_response(query: str):
                     threshold=types.HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
                                     ),
             ]))
-    return response.text
+    if return_only_text:
+        return response.text
+    return response
 
 def evaluate_results(movies: list, query:str):
     formatted_movies = [ f"Index: {i}, Title: {movie["title"]}, Description: {movie["description"]}" for i,  movie in enumerate(movies, start=1)]
